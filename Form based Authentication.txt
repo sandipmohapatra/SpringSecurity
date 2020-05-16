@@ -1,0 +1,153 @@
+spring In-Memory authentication uses InMemoryUserDetailsManager internally store and retrieve the user-related information which is required for Authentication.
+
+In this InMemoryUserDetailsManager we will create and store the user to the in-memory HashMap,update the user credentials and finally delete the user.
+
+
+InMemoryUserDetailsManager is a class.
+
+public class InMemoryUserDetailsManager extends Object implements UserDetailsManager.
+
+
+Example:-
+
+@Bean
+public UserDetailsService userDetailsService() throws Exception {
+    InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+    manager.createUser(User
+            .withUsername("user")
+            .password("userPass")
+            .roles("USER").build());
+    manager.createUser(User
+            .withUsername("admin")
+            .password("adminPass")
+            .roles("ADMIN").build());
+    return manager;
+}
+
+--------------------------------------------------------------------------------------------------------
+UserDetailsService obj = new InMemoryUserDetailsManager(
+			Arrays.asList(
+					User.create("admin", "pass", "ADMIN"),
+					User.create("user0", "pass", "USER"),
+					User.create("user1", "pass", "USER"),
+					User.create("user2", "pass", "USER"),
+					User.create("user3", "pass", "USER"),
+					User.create("user4", "pass", "USER"),
+					User.create("user5", "pass", "USER")));
+------------------------------------------------------------------------------------------------------------------------------
+
+  protected void configure(HttpSecurity http) throws Exception {  
+                  
+        http  
+        .antMatcher("/")                                 
+        .authorizeRequests()  
+            .anyRequest().hasRole("ADMIN")  
+            .and()  
+        .httpBasic();  
+    }  
+}  
+-----------------------------------------------------------------------------------------------------
+This configuration creates a Servlet Filter known as the springSecurityFilterChain. It is responsible for protecting the application URLs, validating submit username and password, redirecting to the login form etc.
+
+The above Java Configuration do the following for our application.
+
+Require authentication for every URL
+Creates a login form
+Allow user to authenticate using form based authentication
+Allow to logout
+Prevent from intruder attack
+Security Header Integration, etc
+----------------------------------------------------------------------------------------------------------------------
+we will register springSecurityFilterChain with the war. To register, Spring Security provides a base class AbstractSecurityWebApplicationInitializer that we need to extend.
+---------------------------------------------------------------------------------------------------------------------------
+SecurityWebApplicationInitializer.java
+
+package com.sandip;  
+import org.springframework.security.web.context.*;  
+  
+public class SecurityWebApplicationInitializer  
+    extends AbstractSecurityWebApplicationInitializer {  
+  
+}  
+----------------------------------------------------------------------------------------------------- 
+To load WebSecurityConfig in our existing ApplicationInitializer and add into the getRootConfigClasses() method.
+------------------------------------------------------------------------------------------------------------------
+MvcWebApplicationInitializer.java
+
+package com.sandip;  
+  
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;  
+
+public class MvcWebApplicationInitializer extends  AbstractAnnotationConfigDispatcherServletInitializer 
+{  
+    @Override  
+    protected Class<?>[] getRootConfigClasses() {  
+        return new Class[] { WebSecurityConfig.class };  
+    }  
+    @Override  
+    protected Class<?>[] getServletConfigClasses() {  
+        // TODO Auto-generated method stub  
+        return null;  
+    }  
+    @Override  
+    protected String[] getServletMappings() {  
+        return new String[] { "/" };  
+    }  
+}  
+-------------------------------------------------------------------------------------------------------------------------
+WebSecurityConfigurerAdapter class provides a configure(HttpSecurity http) method that contains the following default configuration. Default definition is.
+
+protected void configure(HttpSecurity http) throws Exception {  
+http  
+.authorizeRequests()  
+.anyRequest().authenticated()  
+.and()  
+.formLogin()  
+.and()  
+.httpBasic();  
+}  
+--------------------------------------------------------------------------------------------------------
+It is similar to the given XML.
+
+<http>  
+<intercept-url pattern="/**" access="authenticated"/>  
+<form-login />  
+<http-basic />  
+</http>  
+------------------------------------------------------------------------------------------------------
+This method does the following things.
+
+It ensures that each request made by the user requires to the user to be authenticated
+It allows user to authenticate by using form based login
+It allows user to authenticate with HTTP Basic authentication
+
+-------------------------------------------------------------------------------------------------------------
+Creating a controller to handle user requests.
+
+HomeController.java
+
+package com.javatpoint.controller;  
+import org.springframework.stereotype.Controller;  
+import org.springframework.web.bind.annotation.RequestMapping;  
+import org.springframework.web.bind.annotation.RequestMethod;  
+@Controller  
+public class HomeController {  
+      
+    @RequestMapping(value="/", method=RequestMethod.GET)  
+    public String index() {  
+          
+        return "index";  
+    }  
+}  
+----------------------------------------------------------------------------------------------------------
+We have one view (.jsp) page index.jsp, it contains the following source code.
+
+<html>  
+<head>  
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">  
+<title>Home Page</title>  
+</head>  
+<body>  
+Welcome to home page!  
+</body>  
+</html>  
